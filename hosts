@@ -1,0 +1,22 @@
+[all]
+srv01 ansible_host=192.168.10.10
+srv02 ansible_host=192.168.10.20
+srv03 ansible_host=192.168.10.30
+srv04 ansible_host=192.168.10.40
+
+[all:vars]
+# ansible vars
+ansible_ssh_user=root
+ansible_ssh_private_key_file=~/.id_rsa
+
+[reg]
+srv01
+
+[aut]
+srv02
+
+[pkg]
+srv03
+
+[app]
+srv04
