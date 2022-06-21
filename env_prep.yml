@@ -1,0 +1,56 @@
+---
+- name: Prepares testing environment. Step 1
+  hosts: all
+  become: true
+  tasks:
+    - name: checks packages
+      apt: name={{item}} state=present
+      loop: "{{common_pkg_list}}"
+      loop_control:
+        label: "{{item}}"
+      when:
+        - common_pkg_list is defined
+        - common_pkg_list
+      tags: pkg
+
+- name: Prepares testing environment. Step 2
+  hosts: app,pkg
+  become: true
+  tasks:
+    - name: checks /etc/docker/daemon.json file
+      template: src=daemon.json.j2 dest=/etc/docker/daemon.json mode=0644
+      tags: json
+      notify: restarts docker service
+
+  handlers:
+    - name: restarts docker service
+      systemd: name=docker state=restarted
+
+- name: Prepares testing environment. Step 3
+  hosts: reg
+  become: true
+  tasks:
+    - name: checks nexus container
+      docker_container:
+        name: mynexus
+        image: sonatype/nexus3
+        ports: 8081:8081
+        state: started
+        volumes: /opt/nexus-data:/nexus-data
+      tags: reg
+
+- name: Prepares testing environment. Step 4
+  hosts: aut
+  become: true
+  tasks:
+    - name: checks jenkins container
+      docker_container:
+        name: myjenkins
+        image: jenkins/jenkins:lts-jdk11
+        ports:
+          - 8080:8080
+          - 50000:50000
+        state: started
+        volumes: /opt/jenkins_home:/var/jenkins_home
+        restart_policy: on-failure
+      tags: aut

@@ -4,10 +4,14 @@ srv02 ansible_host=192.168.10.20
 srv03 ansible_host=192.168.10.30
 srv04 ansible_host=192.168.10.40
 
+
 [all:vars]
 # ansible vars
-ansible_ssh_user=root
-ansible_ssh_private_key_file=~/.id_rsa
+ansible_ssh_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+# custom vars
+common_pkg_list=["docker.io","python3-docker"]
+reg_ip_addr=192.168.10.10
 
 [reg]
 srv01
