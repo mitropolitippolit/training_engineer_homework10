@@ -3,6 +3,10 @@
   hosts: all
   become: true
   tasks:
+    - name: checks python package
+      raw: apt update && apt install -y python-all
+      tags: raw
+
     - name: checks packages
       apt: name={{item}} state=present
       loop: "{{common_pkg_list}}"
@@ -35,8 +39,22 @@
         name: mynexus
         image: sonatype/nexus3
         ports: 8081:8081
+        volumes: nexus:/nexus-data
         state: started
-        volumes: /opt/nexus-data:/nexus-data
+      tags: reg
+
+    - name: sleeps for some time
+      pause: seconds=120
+      tags: reg
+
+    - name: gets default password
+      shell: cat /var/lib/docker/volumes/nexus/_data/admin.password
+      register: nexus_password
+      tags: reg
+
+    - name: prints default password
+      debug:
+        msg: "nexus admin password: {{nexus_password.stdout}}"
       tags: reg
 
 - name: Prepares testing environment. Step 4
@@ -50,7 +68,21 @@
         ports:
           - 8080:8080
           - 50000:50000
+        volumes: jenkins:/var/jenkins_home
         state: started
-        volumes: /opt/jenkins_home:/var/jenkins_home
         restart_policy: on-failure
+      tags: aut
+
+    - name: sleeps for some time
+      pause: seconds=120
+      tags: aut
+
+    - name: gets default password
+      shell: cat /var/lib/docker/volumes/jenkins/_data/secrets/initialAdminPassword
+      register: jenkins_token
+      tags: aut
+
+    - name: prints default password
+      debug:
+        msg: "jenkins token: {{jenkins_token.stdout}}"
       tags: aut
