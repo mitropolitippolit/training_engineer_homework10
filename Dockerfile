@@ -3,8 +3,8 @@ EXPOSE 8080
 ENV CATALINA_HOME=/opt/tomcat
 ENV TOMCAT_VERSION=9.0.64
 WORKDIR /opt
-RUN apk add --update git maven openjdk8 wget &&\
-    wget https://dlcdn.apache.org/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz &&\
+RUN apk add --update git maven openjdk8 wget
+RUN wget https://dlcdn.apache.org/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz &&\
     tar xzf apache-tomcat-${TOMCAT_VERSION}.tar.gz &&\
     mv apache-tomcat-${TOMCAT_VERSION} tomcat &&\
     rm -rf apache-tomcat-${TOMCAT_VERSION}.tar.gz &&\

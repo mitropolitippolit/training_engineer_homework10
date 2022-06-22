@@ -1,0 +1,93 @@
+- name: Configures testing environment. Step 1. Keys
+  hosts: localhost
+  become: false
+  gather_facts: false
+  tasks:
+    - name: checks community.crypto collection
+      community.general.ansible_galaxy_install:
+        type: collection
+        name: community.crypto
+      tags:
+        - galaxy
+        - step1
+
+    - name: checks private key file
+      community.crypto.openssl_privatekey:
+        path: jenkins.key
+        type: RSA
+        size: 2048
+        mode: 0400
+      tags:
+        - privkey
+        - step1
+
+    - name: checks pub key file
+      community.crypto.openssl_publickey:
+        privatekey_path: jenkins.key
+        path: jenkins.pub
+        format: OpenSSH
+      tags:
+        - pubkey
+        - step1
+
+- name: Configures testing environment. Step 2. Auth conf
+  hosts: app,pkg
+  become: true
+  vars_prompt:
+    - name: reg_user
+      prompt: registry user login
+      private: false
+      default: admin
+    - name: reg_pass
+      prompt: registry user password
+      private: true
+  tasks:
+    - name: checks authorized_keys file
+      authorized_key:
+        user: root
+        state: present
+        key: "{{ lookup('file', 'jenkins.pub') }}"
+      tags:
+        - authkey
+        - step2
+
+    - name: checks /root/.docker dir
+      file: state=directory path=/root/.docker mode=0700
+      tags:
+        - dir
+        - docker
+        - step2
+
+    - name: checks config.json
+      template: src=config.json.j2 dest=/root/.docker/config.json mode=0600
+      tags:
+        - docker
+        - json
+        - step2
+
+    - name: checks /etc/docker/daemon.json file
+      template: src=daemon.json.j2 dest=/etc/docker/daemon.json mode=0644
+      tags:
+        - docker
+        - json
+        - step2
+      notify: restarts docker service
+
+  handlers:
+    - name: restarts docker service
+      systemd: name=docker state=restarted
+      tags:
+        - docker
+        - step2 
+
+- name: Configures testing environment. Step 3. Dockerfile
+  hosts: pkg
+  become: true
+  gather_facts: false
+  tasks:
+    - name: checks Dockerfile
+      copy: src=Dockerfile dest=/root/Dockerfile mode=0644
+      tags:
+        - dockerfile
+        - conf
+        - step3
