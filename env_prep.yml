@@ -23,12 +23,13 @@
   tasks:
     - name: checks /etc/docker/daemon.json file
       template: src=daemon.json.j2 dest=/etc/docker/daemon.json mode=0644
-      tags: json
+      tags: docker
       notify: restarts docker service
 
   handlers:
     - name: restarts docker service
       systemd: name=docker state=restarted
+      tags: docker
 
 - name: Prepares testing environment. Step 3
   hosts: reg
@@ -38,7 +39,9 @@
       docker_container:
         name: mynexus
         image: sonatype/nexus3
-        ports: 8081:8081
+        ports: 
+          - 8081:8081
+          - "{{reg_port}}:{{reg_port}}"
         volumes: nexus:/nexus-data
         state: started
       tags: reg
